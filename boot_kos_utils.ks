@@ -1,4 +1,7 @@
 //boot_kos_utils
+//Created by space_is_hard, with help from TDW89
+//This file is distributed under the terms of the MIT license
+
 
 //This script is a multifunction utility script. It allows the user to select from
 //multiple utilities that will continuously run during flight. It can be set as a boot
