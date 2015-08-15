@@ -83,8 +83,8 @@ FUNCTION scrollDown {
     //Clear the selector arrow from its current position
     PRINT " " AT(0, currentSelection * 4).  //Four lines between each selection
     
-    //Increment our current selection, maximum selection of 8
-    SET currentSelection TO MIN(currentSelection + 1, 8).
+    //Increment our current selection
+    SET currentSelection TO MOD(currentSelection + selectionList:length , selectionList:length) + 1.
     
     //Print a new arrow at the next checkbox down
     PRINT ">" AT(0, currentSelection * 4).  //Four lines between each selection
@@ -97,8 +97,8 @@ FUNCTION scrollUp {
     //Clear the selector arrow from its current position
     PRINT " " AT(0, currentSelection * 4).  //Four lines between each selection
     
-    //Increment our current selection, maximum selection of 8
-    SET currentSelection TO MAX(currentSelection - 1, 1).
+    //Increment our current selection
+    SET currentSelection TO MOD(currentSelection + selectionList:length - 2, selectionList:length) + 1.
     
     //Print a new arrow at the next checkbox up
     PRINT ">" AT(0, currentSelection * 4).  //Four lines between each selection
