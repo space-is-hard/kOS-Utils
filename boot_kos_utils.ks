@@ -529,4 +529,7 @@ UNTIL 1 = 2 {
     
     //Index number 7 was our checkbox for running the utilities
     
+    //Small wait to keep our script from running multiple times per physics tick
+    WAIT 0.01.
+    
 }.
