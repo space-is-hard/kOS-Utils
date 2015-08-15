@@ -247,33 +247,33 @@ FUNCTION panelUtil {
 		
 		//Only attempts to change the value if it's different than the current value
 		IF inAtmo = FALSE {
-            SET inAtmo TO TRUE.
+			SET inAtmo TO TRUE.
 			
-            //Closes the panels
-            PANELS OFF.
+			//Closes the panels
+			PANELS OFF.
 			
-            //Informs the user that we're taking action
-            HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+			//Informs the user that we're taking action
+			HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
             PRINT "Closing Panels".
 			
-        }.
+		}.
 		
-    } ELSE {
+	} ELSE {
 	
 		//Only attempts to change the value if it's different than the current value
 		IF inAtmo = TRUE {
-            SET inAtmo TO FALSE.
-            
-            //Opens the panels
-            PANELS ON.
-            
-            //Informs the user that we're taking action
-            HUDTEXT("Panel Utility: Leaving Atmosphere; Opening Panels", 3, 2, 30, YELLOW, FALSE).
+			SET inAtmo TO FALSE.
+			
+			//Opens the panels
+			PANELS ON.
+			
+			//Informs the user that we're taking action
+			HUDTEXT("Panel Utility: Leaving Atmosphere; Opening Panels", 3, 2, 30, YELLOW, FALSE).
             PRINT "Opening Panels".
 			
-        }.
+		}.
         
-    }.
+	}.
     
 }.
 
@@ -543,7 +543,7 @@ FUNCTION LESUtil {
         OR detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler")  //the LES is attached via a decoupler
         OR detach_part:MODULES:CONTAINS("ModuleDecouple")           //the LES is attached via a stack separator
         OR NOT detach_part:RESOURCES:EMPTY                          //the LES is attached to a resource containing part and wont be jettisoned
-        OR detach_part = SHIP:ROOTPART                              //the root part has no parent so needs to be protected against.
+        or detach_part = ship:rootpart                              //the root part has no parent so needs to be protected against.
       {
 
         SET detach_part TO detach_part:PARENT.
