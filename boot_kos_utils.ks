@@ -25,25 +25,25 @@ PRINT ">[ ]Panel Util - Opens solar panels when not       |  H = Select".
 PRINT "                 in atmosphere. Closes panels when |____________".
 PRINT "                 entering atmosphere.                           ".
 PRINT "                                                                ".
-PRINT " [ ]Gear Util - Raises landing gear and landing legs when above ".
-PRINT "                100 meters radar altitude. Lowers gear and legs ".
-PRINT "                when below 100 meters radar altitude.           ".
+PRINT " [ ]Gear Util  - Raises landing gear and landing legs when above".
+PRINT "                 100 meters radar altitude. Lowers gear and legs".
+PRINT "                 when below 100 meters radar altitude.          ".
 PRINT "                                                                ".
-PRINT " [ ]Chutes Util - Arms parachutes when descending and when safe ".
-PRINT "                  to do so. Will not open chutes if no          ".
-PRINT "                  atmosphere is present. Stock chutes only.     ".
+PRINT " [ ]Chutes     - Arms parachutes when descending and when safe  ".
+PRINT "      Util       to do so. Will not open chutes if no           ".
+PRINT "                 atmosphere is present. Stock chutes only.      ".
 PRINT "                                                                ".
-PRINT " [ ]RT Antenna Util - Opens RemoteTech extendible antennas when ".
-PRINT "                      not in atmosphere and closes them when in ".
-PRINT "                      atmosphere. Requires RemoteTech.          ".
+PRINT " [ ]RT Antenna - Opens RemoteTech extendible antennas when not  ".
+PRINT "          Util   in atmosphere and closes them when in          ".
+PRINT "                 atmosphere. Requires RemoteTech.               ".
 PRINT "                                                                ".
-PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".
+PRINT " [ ]Fairing    - Jettisons fairings when above 95% atmosphere   ".
+PRINT "       Util      height. It is done at 95% to avoid smashing    ".
+PRINT "                 solar panels if the Panels Util is selected.   ".
 PRINT "                                                                ".
-PRINT "                                                                ".
-PRINT "                                                                ".
-PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".
-PRINT "                                                                ".
-PRINT "                                                                ".
+PRINT " [ ]LES Util   - Jettisons the Launch Escape System when above  ".
+PRINT "                 the atmosphere, provided the LES is attached   ".
+PRINT "                 by a decoupler, separator or docking port.     ".
 PRINT "                                                                ".
 PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".
 PRINT "                                                                ".
@@ -71,8 +71,8 @@ SET selectionList TO LIST(
     FALSE,  //Gear Util
     FALSE,  //Chutes Util
     FALSE,  //Antenna Util
-    FALSE,  //Empty
-    FALSE,  //Empty
+    FALSE,  //Fairing Util
+    FALSE,  //LES Util
     FALSE,  //Empty
     FALSE   //Run Utilities
 ).
@@ -139,7 +139,7 @@ FUNCTION makeSelection {
     
 }.
 
-//This loop will check for menu inputs and perform the neccessary menu operations
+//This loop will check for menu inputs and perform the necessary menu operations
 UNTIL selectionMade = TRUE {
     
     //If the user has pressed 'up' and we're ready for a new input
@@ -218,6 +218,14 @@ IF selectionList[3] = TRUE {
         
     }.
     
+}.
+
+IF selectionList[4] = TRUE {
+    PRINT "- Fairing Utility Active".
+}.
+
+IF selectionList[5] = TRUE {
+    PRINT "- LES Utility Active".
 }.
 
 //Visual separator
@@ -480,6 +488,120 @@ FUNCTION RTAntennaUtil {
     
 }.
 
+//=====Fairing Util=====
+
+
+FUNCTION fairingUtil {
+
+  // This uses 95% of the atmosphere height so that it happens before the solar panels start to deploy.
+  IF SHIP:ALTITUDE > 0.95 * BODY:ATM:HEIGHT {
+
+    // Iterates over a list of all parts with the stock fairings module
+    FOR module IN SHIP:MODULESNAMED("ModuleProceduralFairing") { // Stock and KW Fairings
+
+      // and deploys them
+      module:DOEVENT("deploy").
+      HUDTEXT("Fairing Utility: Aproaching edge of atmosphere; Deploying Fairings", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Deploying Fairings".
+
+    }.
+
+    // Iterates over a list of all parts using the fairing module from the Procedural Fairings Mod
+    FOR module IN SHIP:MODULESNAMED("ProceduralFairingDecoupler") { // Procedural Fairings
+
+      // and jettisons them (PF uses the word jettison in the right click menu instead of deploy)
+      module:DOEVENT("jettison").
+      HUDTEXT("Fairing Utility: Approaching edge of atmosphere; Jettisoning Fairings", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Jettisoning Fairings".
+
+    }.
+
+    // Deploying fairings is a one time thing so it disables the module after running it
+    SET selectionList[4] TO FALSE.
+    PRINT "Fairings Utility disabled".
+
+  }.
+
+}.
+
+//=====LES Util=====
+
+FUNCTION LESUtil {
+
+  // Is the vessel above the atmosphere
+  IF SHIP:ALTITUDE > BODY:ATM:HEIGHT {
+
+    // Iterates over a list of all parts with the name "LaunchEscapeSystem" (the stock LES)
+    FOR les IN SHIP:PARTSNAMED("LaunchEscapeSystem") {
+
+      // Sets the point part that will detach the LES to the part the LES is attached to
+      LOCAL detach_part IS les:PARENT.
+
+      // Then if that part is not capable of detaching it continues up the part tree until
+      // it finds a valid part or a part with resources or it gets to the root part and cant go any further
+      UNTIL detach_part:MODULES:CONTAINS("ModuleDockingNode")       //the LES is attached via a docking node
+        OR detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler")  //the LES is attached via a decoupler
+        OR detach_part:MODULES:CONTAINS("ModuleDecouple")           //the LES is attached via a stack separator
+        OR NOT detach_part:RESOURCES:EMPTY                          //the LES is attached to a resource containing part and wont be jettisoned
+        or detach_part = ship:rootpart                              //the root part has no parent so needs to be protected against.
+      {
+
+        SET detach_part TO detach_part:PARENT.
+
+      }.
+
+      // If it is a docking port...
+      IF detach_part:MODULES:CONTAINS("ModuleDockingNode") {
+
+        // ...it triggers the LES engine...
+        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+        // ...then undocks it
+        detach_part:GETMODULE("ModuleDockingNode"):DOEVENT("decouple node").
+
+        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+          PRINT "Jettisoning LES".
+      }
+
+      // If it is a decoupler...
+      ELSE IF detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler") {
+
+        // ...it triggers the LES engine...
+        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+        // ...then decouples it
+        detach_part:GETMODULE("ModuleAnchoredDecoupler"):DOEVENT("decouple").
+
+        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+          PRINT "Jettisoning LES".
+      }
+
+      // If it is a stack separator...
+      ELSE IF detach_part:MODULES:CONTAINS("ModuleDecouple") {
+
+        // ... it triggers the LES engine...
+        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+        // ... then separates it
+        detach_part:GETMODULE("ModuleDecouple"):DOEVENT("decouple").
+
+        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+          PRINT "Jettisoning LES".
+      }.
+
+      ELSE {
+
+        HUDTEXT("LES Utility: [ERR] Unable to identify point to separate from.", 3, 2, 30, RED, FALSE).
+          PRINT "LES Utility error; no valid means of detaching found".
+      }.
+
+    }.
+
+    // This is a one use utility so it disables the module after running
+    SET selectionList[5] to FALSE.
+    PRINT "LES Utility disabled".
+
+  }.
+
+}.
+
 //This will be the main operation loop. Each cycle, it will perform the utilities that
 //were selected in the menu loop and set using the selection list. The loop will never
 //exit unless the user CTRL+C's the program.
@@ -511,13 +633,13 @@ UNTIL 1 = 2 {
     
     IF selectionList[4] = TRUE {
         
-        //Empty slot
+        fairingUtil().
         
     }.
     
     IF selectionList[5] = TRUE {
         
-        //Empty slot
+        LESUtil().
         
     }.
     
