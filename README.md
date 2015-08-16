@@ -17,8 +17,9 @@
 * Chute Util - Automatically deploys your ship's parachutes if you're descending below 10km and the chutes show as 'Safe To Deploy' in the right-click menu. Best used for capsules returning from orbit.
 * RT Antenna Util - Automatically deploys any extendable RemoteTech antennas once you leave the atmosphere and retracts them when you re-enter. This prevents you from forgetting to open your antennas and losing contact with your probe. Will continue to function even if there's no RT connection!
 * Fairing Util - Automatically jettisons all fairings on the vessel when you reach 95% of the current body's atmosphere height. This utility will automatically disable itself once it is fired. Compatible with stock, KW, and procedural fairings.
-* LES Util - Automatically jettisons the stock Launch Escape Tower when exiting the atmosphere. This utility automatically disables itself once it is fired.
+* LES Util - Automatically jettisons the stock Launch Escape Tower when exiting the atmosphere or three seconds after a manual abort. This utility automatically disables itself once it is fired.
+* Autobrake Util - Automatically activates the wheel brakes on landing and releases them during takeoff.
 
-I also left room in the menu for one more utility for you to write! You can use the current utilities as an example of how to write one. Be sure to consult the [kOS documentation](http://ksp-kos.github.io/KOS_DOC/) and feel free to ask questions in the [/r/kOS](https://www.reddit.com/r/Kos) subreddit.
+I also left room in the menu for two more utilities for you to write! You can use the current utilities as an example of how to write one. Be sure to consult the [kOS documentation](http://ksp-kos.github.io/KOS_DOC/) and feel free to ask questions in the [/r/kOS](https://www.reddit.com/r/Kos) subreddit.
 
 If you write a utility that you feel should be included with this release, I'll happily entertain a pull request!
