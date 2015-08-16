@@ -11,48 +11,55 @@ SET versionNumber TO "v1.1".
 
 CLEARSCREEN.
 SET TERMINAL:WIDTH TO 64.
-SET TERMINAL:HEIGHT TO 36.
+SET TERMINAL:HEIGHT TO 44.
 
 //Open the terminal for the user.
 CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Open Terminal").
 
 //Header for our menu
-PRINT "------------------------kOS Utility Menu------------------------".
+PRINT "------------------------kOS Utility Menu------------------------".   //Line 0
 PRINT "----------------------------------------------------------------".   //64 dashes to match terminal width
 
 //Selection menu. Use OVR typing mode for easy editing.
 PRINT "Please select the utilities you would like to run  |  I = Up    ".
 PRINT "                                                   |  K = Down  ".
-PRINT ">[ ]Panel Util - Opens solar panels when not       |  H = Select".
-PRINT "                 in atmosphere. Closes panels when |____________".
-PRINT "                 entering atmosphere.                           ".
+PRINT ">[ ]Panel Util - Opens solar panels when not       |  H = Select".   //Line 4
+PRINT "                 in atmosphere. Closes retractable |____________".
+PRINT "                 panels when entering atmosphere.               ".
 PRINT "                                                                ".
-PRINT " [ ]Gear Util  - Raises landing gear and landing legs when above".
+PRINT " [ ]Gear Util  - Raises landing gear and landing legs when above".   //Line 8
 PRINT "                 100 meters radar altitude. Lowers gear and legs".
 PRINT "                 when below 100 meters radar altitude.          ".
 PRINT "                                                                ".
-PRINT " [ ]Chutes     - Arms parachutes when descending and when safe  ".
+PRINT " [ ]Chutes     - Arms parachutes when descending and when safe  ".   //Line 12
 PRINT "      Util       to do so. Will not open chutes if no           ".
 PRINT "                 atmosphere is present. Stock chutes only.      ".
 PRINT "                                                                ".
-PRINT " [ ]RT Antenna - Opens RemoteTech extendible antennas when not  ".
+PRINT " [ ]RT Antenna - Opens RemoteTech extendible antennas when not  ".   //Line 16
 PRINT "          Util   in atmosphere and closes them when in          ".
 PRINT "                 atmosphere. Requires RemoteTech.               ".
 PRINT "                                                                ".
-PRINT " [ ]Fairing    - Jettisons fairings when above 95% atmosphere   ".
+PRINT " [ ]Fairing    - Jettisons fairings when above 95% atmosphere   ".   //Line 20
 PRINT "       Util      height. It is done at 95% to avoid smashing    ".
 PRINT "                 solar panels if the Panels Util is selected.   ".
 PRINT "                                                                ".
-PRINT " [ ]LES Util   - Jettisons the Launch Escape System when above  ".
-PRINT "                 the atmosphere, provided the LES is attached   ".
-PRINT "                 by a decoupler, separator or docking port.     ".
+PRINT " [ ]LES Util   - Jettisons the Launch Escape System when above  ".   //Line 24
+PRINT "                 the atmosphere or 3 secs after an abort if the ".
+PRINT "                 LES is attached via decoupler or docking port. ".
 PRINT "                                                                ".
-PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".
+PRINT " [ ]Autobrake  - Automatically turns on the wheel brakes        ".   //Line 28
+PRINT "         Util    and air brakes when on the ground and the      ".
+PRINT "                 throttle is zero. Lets them go otherwise.      ".
+PRINT "                                                                ".
+PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".   //Line 32
 PRINT "                                                                ".
 PRINT "                                                                ".
 PRINT "                                                                ".
-PRINT " [ ]RUN SELECTED UTILITIES                                      ".
+PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".   //Line 36
 PRINT "                                                                ".
+PRINT "                                                                ".
+PRINT "                                                                ".
+PRINT " [ ]RUN SELECTED UTILITIES                                      ".   //Line 40
 PRINT "                                                                ".
 PRINT versionNumber.
 
@@ -76,7 +83,9 @@ SET selectionList TO LIST(
     FALSE,  //Antenna Util
     FALSE,  //Fairing Util
     FALSE,  //LES Util
-    FALSE,  //Empty
+    FALSE,  //Autobrake Util
+    FALSE,  //Empty Slot
+    FALSE,  //Empty Slot
     FALSE   //Run Utilities
 ).
 
@@ -133,7 +142,7 @@ FUNCTION makeSelection {
     
     //If the 'Run Utilities' option was the one selected, exit the menu loop and continue
     //on with the rest of the script
-    IF selectionList[7] = TRUE {    //7 being the last item in our list of 8; 0 was the first
+    IF selectionList[selectionList:LENGTH - 1] = TRUE {    //Last item in the list will be the "Run" option
         
         //Exit the menu/selection loop and move on to the utility loop
         SET selectionMade TO TRUE.
@@ -229,6 +238,10 @@ IF selectionList[4] = TRUE {
 
 IF selectionList[5] = TRUE {
     PRINT "- LES Utility Active".
+}.
+
+IF selectionList[6] = TRUE {
+    PRINT "- Autobrake Utility Active".
 }.
 
 //Visual separator
@@ -590,20 +603,68 @@ FUNCTION LESUtil {
       }.
 
       ELSE {
+//=====Autobrake Util=====
+//by space_is_hard
 
         HUDTEXT("LES Utility: [ERR] Unable to identify point to separate from.", 3, 2, 30, RED, FALSE).
           PRINT "LES Utility error; no valid means of detaching found".
       }.
+//This variable will be used to track if the Autobrake Util is the one triggering the
+//brakes. This will prevent the util from turning off the brakes when the user wants them
+//on or vice versa
+SET autoBrake TO FALSE.
 
+FUNCTION autoBrakeUtil {
+    
+    //If we're landed, the throttle is zero, the brakes aren't already on, and the
+    //autobrake utility has not already tried to turn on the brakes
+    IF SHIP:STATUS = "Landed"
+        AND SHIP:CONTROL:PILOTMAINTHROTTLE = 0
+        AND NOT BRAKES
+        AND autoBrake = FALSE {
+    
+        BRAKES ON.
+        
+        //We'll note that the utility is the one activating the brakes instead of the
+        //user
+        SET autoBrake TO TRUE.
+        
+        //And then we'll notify the user that we're taking action
+        HUDTEXT("Autobrake Util: Brakes on", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Autobrakes on".
+        
+    //If we detect liftoff or an increase in throttle, we'll let go of the brakes, but
+    //not if the user has deactivated the brakes manually (we don't want to override the
+    //user)
+    } ELSE IF (
+            SHIP:STATUS <> "Landed"
+            OR SHIP:CONTROL:PILOTMAINTHROTTLE > 0
+        )
+        AND BRAKES
+        AND autoBrake = TRUE {
+        
+        BRAKES OFF.
+        
+        //We'll note that the utility is no longer trying to activate the brakes
+        SET autoBrake TO FALSE.
+        
+        //And then we'll notify the user that we're taking action
+        HUDTEXT("Autobrake Util: Brakes off", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Autobrakes off".
+        
     }.
+    
+}.
 
     // This is a one use utility so it disables the module after running
     SET selectionList[5] to FALSE.
     PRINT "LES Utility disabled".
 
   }.
+//=====Empty Slot [7]=====
 
 }.
+//=====Empty Slot [8]=====
 
 //This will be the main operation loop. Each cycle, it will perform the utilities that
 //were selected in the menu loop and set using the selection list. The loop will never
@@ -649,10 +710,23 @@ UNTIL 1 = 2 {
     IF selectionList[6] = TRUE {
         
         //Empty Slot
+        autoBrakeUtil().
         
     }.
     
-    //Index number 7 was our checkbox for running the utilities
+    //IF selectionList[7] = TRUE {
+        
+        //Empty Slot
+        
+    //}.
+    
+    //IF selectionList[8] = TRUE {
+        
+        //Empty Slot
+        
+    //}.
+    
+    //Index number 9 was our checkbox for running the utilities
     
     //Small wait to keep our script from running multiple times per physics tick
     WAIT 0.01.
