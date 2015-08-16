@@ -6,6 +6,7 @@
 * Added Fairing Util and LES Util (TDW89)
 * Added Autobrake Util
 * Extended selection menu length to 9 total utils, 7 are active and 2 are empty
+* General optimization
 
 ##v1.0
 * Initial Release

@@ -63,7 +63,7 @@ PRINT " [ ]RUN SELECTED UTILITIES                                      ".   //Li
 PRINT "                                                                ".
 PRINT versionNumber.
 
-//Variable to tell whether we're ready to run the main loop
+//Variable to tell whether we're ready to exit the selection loop
 SET selectionMade TO FALSE.
 
 //Variable to tell whether we've just made an input. Will be set to false once an input
@@ -109,7 +109,7 @@ FUNCTION scrollUp {
     //Clear the selector arrow from its current position
     PRINT " " AT(0, currentSelection * 4).  //Four lines between each selection
     
-    //Increment our current selection
+    //Decrement our current selection
     SET currentSelection TO MOD(currentSelection + selectionList:length - 2, selectionList:length) + 1.
     
     //Print a new arrow at the next checkbox up
@@ -251,6 +251,7 @@ PRINT "-------------------------------" + versionNumber.
 //function's variables just above the variable's parent function to keep things organized
 
 //=====Panel Utility=====
+//by space_is_hard
 
 //Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
 //but will get immediately corrected if not
@@ -294,6 +295,7 @@ FUNCTION panelUtil {
 }.
 
 //=====Gear Util=====
+//by space_is_hard
 
 //Variable used to determine if we're below 100m. Assumes that we start out on the ground
 //but will get immediately corrected if not
@@ -301,27 +303,29 @@ SET belowAlt TO TRUE.
 
 FUNCTION gearUtil {
 
-	//Determines whether the vessel is below 100m.
+	//Determines whether the vessel is below 100m. Only attempts to change the value if
+    //it's different than the current value
 	IF ALT:RADAR < 100 {
+        
+        IF NOT belowAlt {
 		
-		//Only attempts to change the value if it's different than the current value
-		IF belowAlt = FALSE {
-			SET belowAlt TO TRUE.
-			
-			//Lowers the gear and legs
-			GEAR ON.
-			LEGS ON.
-			
-			//Informs the user that we're taking action
-			HUDTEXT("Gear Utility: Below 100m; Lowering Gear", 3, 2, 30, YELLOW, FALSE).
+            SET belowAlt TO TRUE.
+            
+            //Lowers the gear and legs
+            GEAR ON.
+            LEGS ON.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("Gear Utility: Below 100m; Lowering Gear", 3, 2, 30, YELLOW, FALSE).
             PRINT "Lowering Gear and Legs".
-			
-		}.
+            
+        }.
 		
 	} ELSE {
 	
 		//Only attempts to change the value if it's different than the current value
 		IF belowAlt = TRUE {
+            
 			SET belowAlt TO FALSE.
 			
 			//Lowers the gear and legs
@@ -339,6 +343,7 @@ FUNCTION gearUtil {
 }.
 
 //=====Chutes Util=====
+//by space_is_hard
 
 //List that we'll store all of the parachute parts in
 SET chuteList TO LIST().
@@ -371,38 +376,29 @@ FOR item IN partList {
 
 FUNCTION chutesUtil {
     
-    //Determines whether we're in atmosphere
-    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT {
+    //Determines whether we're in atmosphere, and below 10km, and descending
+    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT 
+        AND SHIP:ALTITUDE < 10000
+        AND SHIP:VERTICALSPEED < -1 {
         
-        //Determines whether we're below 10km
-        IF SHIP:ALTITUDE < 10000 {
+        //Goes over the chute list
+        FOR chute IN chuteList {
             
-            //Determines whether we're headed down or not, small margin included to
-            //prevent the script from triggering while sitting on the launchpad
-            IF SHIP:VERTICALSPEED < -1 {
+            //Checks to see if the chute is already deployed
+            IF chute:GETMODULE("ModuleParachute"):HASEVENT("Deploy Chute") {
                 
-                //Goes over the chute list
-                FOR chute IN chuteList {
+                //Checks to see if the chute is safe to deploy
+                IF chute:GETMODULE("ModuleParachute"):GETFIELD("Safe To Deploy?") = "Safe" {
                     
-                    //Checks to see if the chute is already deployed
-                    IF chute:GETMODULE("ModuleParachute"):HASEVENT("Deploy Chute") {
-                        
-                        //Checks to see if the chute is safe to deploy
-                        IF chute:GETMODULE("ModuleParachute"):GETFIELD("Safe To Deploy?") = "Safe" {
-                            
-                            //Deploy/arm this chute that has shown up as safe and ready
-                            //to deploy
-                            chute:GETMODULE("ModuleParachute"):DOACTION("Deploy", TRUE).
-                            
-                            //Inform the user that we did so
-                            HUDTEXT("Chute Utility: Safe to deploy; Arming parachute", 3, 2, 30, YELLOW, FALSE).
-                            
-                        }.
-                        
-                    }.
+                    //Deploy/arm this chute that has shown up as safe and ready
+                    //to deploy
+                    chute:GETMODULE("ModuleParachute"):DOACTION("Deploy", TRUE).
+                    
+                    //Inform the user that we did so
+                    HUDTEXT("Chute Utility: Safe to deploy; Arming parachute", 3, 2, 30, YELLOW, FALSE).
                     
                 }.
-                
+            
             }.
             
         }.
@@ -412,6 +408,7 @@ FUNCTION chutesUtil {
 }.
 
 //=====RT Antenna Util=====
+//by space_is_hard
 
 //Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
 //but will get immediately corrected if not. Name altered so as to not conflict with
@@ -464,13 +461,14 @@ FUNCTION RTAntennaUtil {
 		
 		//Only attempts to change the value if it's different than the current value
 		IF RTinAtmo = FALSE {
+        
 			SET RTinAtmo TO TRUE.
 			
 			//Goes over our previously-built antenna list
 			FOR antenna IN antennaList {
                 
                 //Closes the antenna
-                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Deactivate", TRUE).  //TEST:
+                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Deactivate", TRUE).
                 
             }.
 			
@@ -484,13 +482,14 @@ FUNCTION RTAntennaUtil {
 	
 		//Only attempts to change the value if it's different than the current value
 		IF RTinAtmo = TRUE {
+        
 			SET RTinAtmo TO FALSE.
 			
 			//Goes over our previously-built antenna list
 			FOR antenna IN antennaList {
                 
                 //Opens the antenna
-                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).  //TEST:
+                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).
                 
             }.
             
@@ -505,110 +504,141 @@ FUNCTION RTAntennaUtil {
 }.
 
 //=====Fairing Util=====
+//by TDW89
 
 
 FUNCTION fairingUtil {
 
-  // This uses 95% of the atmosphere height so that it happens before the solar panels start to deploy.
-  IF SHIP:ALTITUDE > 0.95 * BODY:ATM:HEIGHT {
+    // This uses 95% of the atmosphere height so that it happens before the solar panels start to deploy.
+    IF SHIP:ALTITUDE > 0.95 * BODY:ATM:HEIGHT {
 
-    // Iterates over a list of all parts with the stock fairings module
-    FOR module IN SHIP:MODULESNAMED("ModuleProceduralFairing") { // Stock and KW Fairings
+        // Iterates over a list of all parts with the stock fairings module
+        FOR module IN SHIP:MODULESNAMED("ModuleProceduralFairing") { // Stock and KW Fairings
 
-      // and deploys them
-      module:DOEVENT("deploy").
-      HUDTEXT("Fairing Utility: Aproaching edge of atmosphere; Deploying Fairings", 3, 2, 30, YELLOW, FALSE).
-        PRINT "Deploying Fairings".
+            // and deploys them
+            module:DOEVENT("deploy").
+            HUDTEXT("Fairing Utility: Aproaching edge of atmosphere; Deploying Fairings", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Deploying Fairings".
+
+        }.
+
+        // Iterates over a list of all parts using the fairing module from the Procedural Fairings Mod
+        FOR module IN SHIP:MODULESNAMED("ProceduralFairingDecoupler") { // Procedural Fairings
+        
+            // and jettisons them (PF uses the word jettison in the right click menu instead of deploy)
+            module:DOEVENT("jettison").
+            HUDTEXT("Fairing Utility: Approaching edge of atmosphere; Jettisoning Fairings", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Jettisoning Fairings".
+            
+        }.
+
+        // Deploying fairings is a one time thing so it disables the module after running it
+        SET selectionList[4] TO FALSE.
+        PRINT "Fairings Utility disabled".
 
     }.
-
-    // Iterates over a list of all parts using the fairing module from the Procedural Fairings Mod
-    FOR module IN SHIP:MODULESNAMED("ProceduralFairingDecoupler") { // Procedural Fairings
-
-      // and jettisons them (PF uses the word jettison in the right click menu instead of deploy)
-      module:DOEVENT("jettison").
-      HUDTEXT("Fairing Utility: Approaching edge of atmosphere; Jettisoning Fairings", 3, 2, 30, YELLOW, FALSE).
-        PRINT "Jettisoning Fairings".
-
-    }.
-
-    // Deploying fairings is a one time thing so it disables the module after running it
-    SET selectionList[4] TO FALSE.
-    PRINT "Fairings Utility disabled".
-
-  }.
 
 }.
 
 //=====LES Util=====
+//by TDW89
+
+//We'll use this variable to track when the abort command was issued.
+SET abortTimer TO -1.   //Bogus value that will help us debug the script if need be
 
 FUNCTION LESUtil {
+    
+    //Here we'll check if the abort action group has been triggered and if it's the first
+    //time we've triggered it
+    IF ABORT AND abortTimer < 0 {
+        
+        //And here we'll set the abort timer to our current time
+        SET abortTimer TO TIME:SECONDS.
+        
+        //And we'll let the user know that we've detected a manual abort
+        HUDTEXT("LES Util: Manual abort detected; standby for LES jettison", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Manual abort detected".
+        
+    }.
 
-  // Is the vessel above the atmosphere
-  IF SHIP:ALTITUDE > BODY:ATM:HEIGHT {
+    // Is the vessel above the atmosphere, or are we three seconds past a detected manual abort?
+    IF SHIP:ALTITUDE > BODY:ATM:HEIGHT OR (abortTimer > 0 AND TIME:SECONDS > abortTimer + 3) {
+        
+        // Iterates over a list of all parts with the name "LaunchEscapeSystem" (the stock LES)
+        FOR les IN SHIP:PARTSNAMED("LaunchEscapeSystem") {
+            
+            // Sets the point part that will detach the LES to the part the LES is attached to
+            LOCAL detach_part IS les:PARENT.
+            
+            // Then if that part is not capable of detaching it continues up the part tree until
+            // it finds a valid part or a part with resources or it gets to the root part and cant go any further
+            UNTIL detach_part:MODULES:CONTAINS("ModuleDockingNode")         //the LES is attached via a docking node
+                OR detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler")  //the LES is attached via a decoupler
+                OR detach_part:MODULES:CONTAINS("ModuleDecouple")           //the LES is attached via a stack separator
+                OR NOT detach_part:RESOURCES:EMPTY                          //the LES is attached to a resource containing part and wont be jettisoned
+                OR detach_part = SHIP:ROOTPART                              //the root part has no parent so needs to be protected against.
+            {
+                
+                SET detach_part TO detach_part:PARENT.
+                
+            }.
 
-    // Iterates over a list of all parts with the name "LaunchEscapeSystem" (the stock LES)
-    FOR les IN SHIP:PARTSNAMED("LaunchEscapeSystem") {
+            // If it is a docking port...
+            IF detach_part:MODULES:CONTAINS("ModuleDockingNode") {
+                
+                // ...it triggers the LES engine...
+                les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+                
+                // ...then undocks it
+                detach_part:GETMODULE("ModuleDockingNode"):DOEVENT("decouple node").
+                
+                //Informs the user that we just took action
+                HUDTEXT("LES Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Jettisoning LES".
+                
+            // If it is a decoupler...
+            } ELSE IF detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler") {
+                
+                // ...it triggers the LES engine...
+                les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+                
+                // ...then decouples it
+                detach_part:GETMODULE("ModuleAnchoredDecoupler"):DOEVENT("decouple").
+                
+                HUDTEXT("LES Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Jettisoning LES".
+                
+            } ELSE IF detach_part:MODULES:CONTAINS("ModuleDecouple") {
+                
+                // ... it triggers the LES engine...
+                les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
+                
+                // ... then separates it
+                detach_part:GETMODULE("ModuleDecouple"):DOEVENT("decouple").
+                
+                HUDTEXT("LES Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Jettisoning LES".
+                
+            } ELSE {
+                
+                HUDTEXT("LES Utility: [ERR] Unable to identify point to separate from.", 3, 2, 30, RED, FALSE).
+                PRINT "LES Utility error; no valid means of detaching found".
+                
+            }.
 
-      // Sets the point part that will detach the LES to the part the LES is attached to
-      LOCAL detach_part IS les:PARENT.
+        }.
+        
+        // This is a one use utility so it disables the module after running
+        SET selectionList[5] to FALSE.
+        PRINT "LES Utility disabled".
+        
+    }.
+    
+}.
 
-      // Then if that part is not capable of detaching it continues up the part tree until
-      // it finds a valid part or a part with resources or it gets to the root part and cant go any further
-      UNTIL detach_part:MODULES:CONTAINS("ModuleDockingNode")       //the LES is attached via a docking node
-        OR detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler")  //the LES is attached via a decoupler
-        OR detach_part:MODULES:CONTAINS("ModuleDecouple")           //the LES is attached via a stack separator
-        OR NOT detach_part:RESOURCES:EMPTY                          //the LES is attached to a resource containing part and wont be jettisoned
-        or detach_part = ship:rootpart                              //the root part has no parent so needs to be protected against.
-      {
-
-        SET detach_part TO detach_part:PARENT.
-
-      }.
-
-      // If it is a docking port...
-      IF detach_part:MODULES:CONTAINS("ModuleDockingNode") {
-
-        // ...it triggers the LES engine...
-        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
-        // ...then undocks it
-        detach_part:GETMODULE("ModuleDockingNode"):DOEVENT("decouple node").
-
-        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
-          PRINT "Jettisoning LES".
-      }
-
-      // If it is a decoupler...
-      ELSE IF detach_part:MODULES:CONTAINS("ModuleAnchoredDecoupler") {
-
-        // ...it triggers the LES engine...
-        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
-        // ...then decouples it
-        detach_part:GETMODULE("ModuleAnchoredDecoupler"):DOEVENT("decouple").
-
-        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
-          PRINT "Jettisoning LES".
-      }
-
-      // If it is a stack separator...
-      ELSE IF detach_part:MODULES:CONTAINS("ModuleDecouple") {
-
-        // ... it triggers the LES engine...
-        les:GETMODULE("ModuleEnginesFX"):DOACTION("activate engine",TRUE).
-        // ... then separates it
-        detach_part:GETMODULE("ModuleDecouple"):DOEVENT("decouple").
-
-        HUDTEXT("Fairing Utility: Leaving Atmosphere; Jettisoning LES", 3, 2, 30, YELLOW, FALSE).
-          PRINT "Jettisoning LES".
-      }.
-
-      ELSE {
 //=====Autobrake Util=====
 //by space_is_hard
 
-        HUDTEXT("LES Utility: [ERR] Unable to identify point to separate from.", 3, 2, 30, RED, FALSE).
-          PRINT "LES Utility error; no valid means of detaching found".
-      }.
 //This variable will be used to track if the Autobrake Util is the one triggering the
 //brakes. This will prevent the util from turning off the brakes when the user wants them
 //on or vice versa
@@ -656,14 +686,8 @@ FUNCTION autoBrakeUtil {
     
 }.
 
-    // This is a one use utility so it disables the module after running
-    SET selectionList[5] to FALSE.
-    PRINT "LES Utility disabled".
-
-  }.
 //=====Empty Slot [7]=====
 
-}.
 //=====Empty Slot [8]=====
 
 //This will be the main operation loop. Each cycle, it will perform the utilities that
@@ -709,7 +733,6 @@ UNTIL 1 = 2 {
     
     IF selectionList[6] = TRUE {
         
-        //Empty Slot
         autoBrakeUtil().
         
     }.
@@ -732,3 +755,4 @@ UNTIL 1 = 2 {
     WAIT 0.01.
     
 }.
+
