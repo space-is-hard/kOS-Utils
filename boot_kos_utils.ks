@@ -7,6 +7,8 @@
 //multiple utilities that will continuously run during flight. It can be set as a boot
 //script and is designed for ease-of-use.
 
+SET versionNumber TO "v1.1".
+
 CLEARSCREEN.
 SET TERMINAL:WIDTH TO 64.
 SET TERMINAL:HEIGHT TO 36.
@@ -52,6 +54,7 @@ PRINT "                                                                ".
 PRINT " [ ]RUN SELECTED UTILITIES                                      ".
 PRINT "                                                                ".
 PRINT "                                                                ".
+PRINT versionNumber.
 
 //Variable to tell whether we're ready to run the main loop
 SET selectionMade TO FALSE.
@@ -229,7 +232,7 @@ IF selectionList[5] = TRUE {
 }.
 
 //Visual separator
-PRINT "------------------------------------".
+PRINT "-------------------------------" + versionNumber.
 
 //The following functions will be used to perform the utilities. We'll initialize each
 //function's variables just above the variable's parent function to keep things organized
