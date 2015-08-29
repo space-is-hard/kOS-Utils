@@ -310,7 +310,7 @@ FUNCTION panelUtil {
     //opened them.
     IF SHIP:STATUS = "Landed"
         AND NOT panelsOpen
-        AND SHIP:VELOCITY:SURFACE:MAG < 10 {
+        AND SHIP:VELOCITY:SURFACE:MAG < 0.1 {
         
         //Opens the panels
         PANELS ON.
@@ -319,12 +319,12 @@ FUNCTION panelUtil {
         SET panelsOpen TO TRUE.
         
         //Informs the user that we're taking action
-        HUDTEXT("Panel Utility: Landed and below 10m/s; Opening Panels", 3, 2, 30, YELLOW, FALSE).
+        HUDTEXT("Panel Utility: Landed and stationary; Opening Panels", 3, 2, 30, YELLOW, FALSE).
         PRINT "Opening Panels".
         
     } ELSE IF SHIP:STATUS = "Landed"
         AND panelsOpen
-        AND SHIP:VELOCITY:SURFACE:MAG >= 10 {
+        AND SHIP:VELOCITY:SURFACE:MAG >= 0.1 {
         
         //Closes the panels
         PANELS OFF.
@@ -332,7 +332,7 @@ FUNCTION panelUtil {
         SET panelsOpen TO FALSE.
         
         //Informs the user that we're taking action
-        HUDTEXT("Panel Utility: Landed and above 10m/s; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+        HUDTEXT("Panel Utility: Landed and moving; Closing Panels", 3, 2, 30, YELLOW, FALSE).
         PRINT "Closing Panels".
         
     }.
