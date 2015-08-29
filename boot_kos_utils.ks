@@ -265,7 +265,7 @@ FUNCTION panelUtil {
 
     //Determines whether the vessel is in the atmosphere. Ignores this check if landed
     IF SHIP:ALTITUDE < BODY:ATM:HEIGHT
-        AND NOT SHIP:STATUS = "Landed" {
+        AND NOT (SHIP:STATUS = "Landed") {
         
         //Only attempts to change the value if it's different than the current value
         IF inAtmo = FALSE {
