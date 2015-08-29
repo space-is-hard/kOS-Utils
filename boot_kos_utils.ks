@@ -723,8 +723,8 @@ FUNCTION autoBrakeUtil {
 //This function is always-on, and designed to prevent the kOS core from eating up all of
 //the electric charge on a ship, leaving it stranded with no power. It shuts off the core
 //when the ship is below 10% power capacity and the charge rate is falling. There is no
-//way to turn the core back on via code, it will have to be done manually. However, the
-//code should resume where it left off once power is restored.
+//way to turn the core back on via code, it will have to be done manually. Once turned
+//back on, the user will have to re-select the desired utilities.
 
 //We'll use this variable to track the previous level of electric charge.
 //`SHIP:ELECTRICCHARGE` is a bound variable; a shortcut that can only get us the current
