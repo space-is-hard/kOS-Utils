@@ -1,13 +1,14 @@
 //boot_kos_utils
-//Created by space_is_hard, with help from TDW89
+//Created by space_is_hard
+//Additional functions provided by TDW89
 //This file is distributed under the terms of the MIT license
-
+//TEST: Ctrl+F "TEST:" to find all new changes that need testing. If none found, delete this message
 
 //This script is a multifunction utility script. It allows the user to select from
 //multiple utilities that will continuously run during flight. It can be set as a boot
 //script and is designed for ease-of-use.
 
-SET versionNumber TO "v1.1".
+SET versionNumber TO "v1.2".
 
 CLEARSCREEN.
 SET TERMINAL:WIDTH TO 64.
@@ -190,8 +191,8 @@ UNTIL selectionMade = TRUE {
     }.
     
     //Keeps our loop from running too fast but still is able to keep up with the user's
-    //potential for rapid keypresses
-    WAIT 0.1.
+    //potential for rapid keypresses TEST: faster loop time for better responsiveness
+    WAIT 0.05.
     
 }.
 
@@ -251,46 +252,90 @@ PRINT "-------------------------------" + versionNumber.
 //function's variables just above the variable's parent function to keep things organized
 
 //=====Panel Utility=====
-//by space_is_hard
+//by space_is_hard TEST: New landed functionality
 
 //Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
 //but will get immediately corrected if not
 SET inAtmo TO TRUE.
 
+//This variable will allow us to remember whether we've opened the panels yet or not
+SET panelsOpen TO FALSE.
+
 FUNCTION panelUtil {
 
-	//Determines whether the vessel is in the atmosphere.
-	IF SHIP:ALTITUDE < BODY:ATM:HEIGHT {
-		
-		//Only attempts to change the value if it's different than the current value
-		IF inAtmo = FALSE {
-			SET inAtmo TO TRUE.
-			
-			//Closes the panels
-			PANELS OFF.
-			
-			//Informs the user that we're taking action
-			HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Closing Panels".
-			
-		}.
-		
-	} ELSE {
-	
-		//Only attempts to change the value if it's different than the current value
-		IF inAtmo = TRUE {
-			SET inAtmo TO FALSE.
-			
-			//Opens the panels
-			PANELS ON.
-			
-			//Informs the user that we're taking action
-			HUDTEXT("Panel Utility: Leaving Atmosphere; Opening Panels", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Opening Panels".
-			
-		}.
+    //Determines whether the vessel is in the atmosphere. Ignores this check if landed
+    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT
+        AND NOT SHIP:STATUS = "Landed" {
         
-	}.
+        //Only attempts to change the value if it's different than the current value
+        IF inAtmo = FALSE {
+            SET inAtmo TO TRUE.
+            
+            //Closes the panels
+            PANELS OFF.
+            
+            //Lets us remember that we've closed the panels
+            SET panelsOpen TO FALSE.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Closing Panels".
+            
+        }.
+        
+    //Determines whether the vessel is out of atmosphere. Ignores this check if landed
+    } ELSE IF SHIP:ALTITUDE > BODY:ATM:HEIGHT
+        AND NOT SHIP:STATUS = "Landed" {
+    
+        //Only attempts to change the value if it's different than the current value
+        IF inAtmo = TRUE {
+            SET inAtmo TO FALSE.
+            
+            //Opens the panels
+            PANELS ON.
+            
+            //Lets us remember that we've opened the panels
+            SET panelsOpen TO TRUE.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("Panel Utility: Leaving Atmosphere; Opening Panels", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Opening Panels".
+            
+        }.
+        
+    }.
+    
+    //This separate check will open or close the panels based on whether we're landed and
+    //travelling below a certain speed. Doesn't attempt to open them if we've already
+    //opened them.
+    IF SHIP:STATUS = "Landed"
+        AND NOT panelsOpen
+        AND SHIP:VELOCITY:SURFACE:MAG < 10 {
+        
+        //Opens the panels
+        PANELS ON.
+        
+        //Lets us remember that we've opened the panels
+        SET panelsOpen TO TRUE.
+        
+        //Informs the user that we're taking action
+        HUDTEXT("Panel Utility: Landed and below 10m/s; Opening Panels", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Opening Panels".
+        
+    } ELSE IF SHIP:STATUS = "Landed"
+        AND panelsOpen
+        AND SHIP:VELOCITY:SURFACE:MAG >= 10 {
+        
+        //Closes the panels
+        PANELS OFF.
+        
+        SET panelsOpen TO FALSE.
+        
+        //Informs the user that we're taking action
+        HUDTEXT("Panel Utility: Landed and above 10m/s; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+        PRINT "Closing Panels".
+        
+    }.
     
 }.
 
@@ -303,12 +348,12 @@ SET belowAlt TO TRUE.
 
 FUNCTION gearUtil {
 
-	//Determines whether the vessel is below 100m. Only attempts to change the value if
+    //Determines whether the vessel is below 100m. Only attempts to change the value if
     //it's different than the current value
-	IF ALT:RADAR < 100 {
+    IF ALT:RADAR < 100 {
         
         IF NOT belowAlt {
-		
+        
             SET belowAlt TO TRUE.
             
             //Lowers the gear and legs
@@ -320,25 +365,25 @@ FUNCTION gearUtil {
             PRINT "Lowering Gear and Legs".
             
         }.
-		
-	} ELSE {
-	
-		//Only attempts to change the value if it's different than the current value
-		IF belowAlt = TRUE {
-            
-			SET belowAlt TO FALSE.
-			
-			//Lowers the gear and legs
-			GEAR OFF.
-			LEGS OFF.
-			
-			//Informs the user that we're taking action
-			HUDTEXT("Gear Utility: Above 100m; Raising Gear", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Raising Gear and Legs".
-			
-		}.
         
-	}.
+    } ELSE {
+    
+        //Only attempts to change the value if it's different than the current value
+        IF belowAlt = TRUE {
+            
+            SET belowAlt TO FALSE.
+            
+            //Lowers the gear and legs
+            GEAR OFF.
+            LEGS OFF.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("Gear Utility: Above 100m; Raising Gear", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Raising Gear and Legs".
+            
+        }.
+        
+    }.
     
 }.
 
@@ -408,7 +453,7 @@ FUNCTION chutesUtil {
 }.
 
 //=====RT Antenna Util=====
-//by space_is_hard
+//by space_is_hard TEST: antenna list creation optimization
 
 //Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
 //but will get immediately corrected if not. Name altered so as to not conflict with
@@ -418,88 +463,68 @@ SET RTinAtmo TO TRUE.
 //List that we'll store all of the antenna parts in
 SET antennaList TO LIST().
 
-//Lists all of the parts on the ship. Name altered so as not to conflict with the chute
-//util's part list
-LIST PARTS IN RTpartList.
-
-//Goes over the list of parts we just made
-FOR item IN RTpartList {
+//Goes over all of the modules on the entire ship, and lists the ones named
+//"ModuleRTAntenna" in a list called "RTmodule". This should produce a list of all of the
+//RemoteTech antenna modules
+FOR RTmodule IN SHIP:MODULESNAMED("ModuleRTAntenna") {
     
-    //Gets all of the modules of the part we're going over; local variable that gets
-    //dumped every time the FOR loop is finished
-    LOCAL moduleList TO item:MODULES.
-    
-    //Goes over moduleList to find the Remote Tech Antenna module
-    FOR module IN moduleList {
-    
-        //Checks the name of the module, and moves on to check if it's extendible
-        IF module = "ModuleRTAntenna" {
-            
-            //Checks to see if there's also a module for animation; this tells us if the
-            //antenna is of the extendible type
-            FOR module2 IN moduleList {
-                
-                IF module2 = "ModuleAnimateGeneric" {
+    //Checks to see if the part that the antenna module is attached to *also* contains
+    //an animation module
+    IF RTmodule:PART:MODULES:CONTAINS("ModuleAnimateGeneric") {
         
-                    //Stores the part in the chuteList
-                    antennaList:ADD(item).
-                    
-                }.
-            
-            }.
-            
-        }.
+        //If so, it adds that part to the antenna list
+        antennaList:ADD(RTmodule:PART).
         
     }.
     
 }.
 
-FUNCTION RTAntennaUtil {
+FUNCTION RTAntennaUtil {    //TODO: Implement same landed check as panel util
 
-	//Determines whether the vessel is in the atmosphere.
-	IF SHIP:ALTITUDE < BODY:ATM:HEIGHT {
-		
-		//Only attempts to change the value if it's different than the current value
-		IF RTinAtmo = FALSE {
+    //Determines whether the vessel is in the atmosphere.
+    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT {
         
-			SET RTinAtmo TO TRUE.
-			
-			//Goes over our previously-built antenna list
-			FOR antenna IN antennaList {
+        //Only attempts to change the value if it's different than the current value
+        IF RTinAtmo = FALSE {
+        
+            SET RTinAtmo TO TRUE.
+            
+            //Goes over our previously-built antenna list
+            FOR antenna IN antennaList {
                 
                 //Closes the antenna
                 antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Deactivate", TRUE).
                 
             }.
-			
-			//Informs the user that we're taking action
-			HUDTEXT("RT Antenna Utility: Entering Atmosphere; Closing Antennas", 3, 2, 30, YELLOW, FALSE).
+            
+            //Informs the user that we're taking action
+            HUDTEXT("RT Antenna Utility: Entering Atmosphere; Closing Antennas", 3, 2, 30, YELLOW, FALSE).
             PRINT "Closing Antennas".
-			
-		}.
-		
-	} ELSE {
-	
-		//Only attempts to change the value if it's different than the current value
-		IF RTinAtmo = TRUE {
+            
+        }.
         
-			SET RTinAtmo TO FALSE.
-			
-			//Goes over our previously-built antenna list
-			FOR antenna IN antennaList {
+    } ELSE {
+    
+        //Only attempts to change the value if it's different than the current value
+        IF RTinAtmo = TRUE {
+        
+            SET RTinAtmo TO FALSE.
+            
+            //Goes over our previously-built antenna list
+            FOR antenna IN antennaList {
                 
                 //Opens the antenna
                 antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).
                 
             }.
             
-			//Informs the user that we're taking action
-			HUDTEXT("RT Antenna Utility: Leaving Atmosphere; Opening Antennas", 3, 2, 30, YELLOW, FALSE).
+            //Informs the user that we're taking action
+            HUDTEXT("RT Antenna Utility: Leaving Atmosphere; Opening Antennas", 3, 2, 30, YELLOW, FALSE).
             PRINT "Opening Antennas".
-			
-		}.
+            
+        }.
         
-	}.
+    }.
     
 }.
 
@@ -543,13 +568,15 @@ FUNCTION fairingUtil {
 //=====LES Util=====
 //by TDW89
 
-//We'll use this variable to track when the abort command was issued.
-SET abortTimer TO -1.   //Bogus value that will help us debug the script if need be
+//We'll use this variable to track when the abort command was issued. We'll set it to a
+//bogus value to help with debugging. This will also let us check to see if the timer has
+//been set, as the game's Universal Time is never below 0.
+SET abortTimer TO -1.
 
 FUNCTION LESUtil {
     
     //Here we'll check if the abort action group has been triggered and if it's the first
-    //time we've triggered it
+    //time we've triggered it since running the script
     IF ABORT AND abortTimer < 0 {
         
         //And here we'll set the abort timer to our current time
@@ -690,6 +717,56 @@ FUNCTION autoBrakeUtil {
 
 //=====Empty Slot [8]=====
 
+//=====Auto Low Charge Shutdown=====
+//by space_is_hard
+
+//This function is always-on, and designed to prevent the kOS core from eating up all of
+//the electric charge on a ship, leaving it stranded with no power. It shuts off the core
+//when the ship is below 10% power capacity and the charge rate is falling. There is no
+//way to turn the core back on via code, it will have to be done manually. However, the
+//code should resume where it left off once power is restored.
+
+//We'll use this variable to track the previous level of electric charge.
+//`SHIP:ELECTRICCHARGE` is a bound variable; a shortcut that can only get us the current
+//amount of charge on the ship. We'll set it now and update it every loop.
+SET previousCharge TO SHIP:ELECTRICCHARGE.
+
+FUNCTION lowChargeShutdown {
+    
+    //Here, we'll list all of the consumable resources on the entire ship
+    LIST RESOURCES IN resourceList.
+    
+    //We'll then go over every one..
+    FOR resource IN resourceList {
+        
+        //And find the one named "ElectricCharge"
+        IF resource:NAME = "ElectricCharge" {
+            
+            //We'll only perform the shutdown if the charge is both below 10% of the
+            //ship's capacity *and* if the current charge is less than it was the last
+            //time we performed this function. This tells us if it's decreasing.
+            IF resource:AMOUNT / resource:CAPACITY <= 0.1 AND resource:AMOUNT < previousCharge {
+                
+                //Shuts down the core that we're running the code on TEST: Module and event
+                CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Toggle Power").
+                
+                //Informs the user of the action we took
+                HUDTEXT("kOS Utils: Low power, shutting down", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Low power, shutting down".
+                
+            }.
+            
+        }.
+        
+    }.
+    
+    //Stores the current charge in this variable so that we can check it the next time 
+    //that we run the function. The `WAIT` in the main loop will ensure that the next
+    //time we poll this variable occurs in a new physics tick.
+    SET previousCharge TO SHIP:ELECTRICCHARGE.
+    
+}.
+
 //This will be the main operation loop. Each cycle, it will perform the utilities that
 //were selected in the menu loop and set using the selection list. The loop will never
 //exit unless the user CTRL+C's the program.
@@ -751,8 +828,9 @@ UNTIL 1 = 2 {
     
     //Index number 9 was our checkbox for running the utilities
     
+    lowChargeShutdown().
+    
     //Small wait to keep our script from running multiple times per physics tick
     WAIT 0.01.
     
 }.
-
