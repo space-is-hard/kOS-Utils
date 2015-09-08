@@ -2,7 +2,6 @@
 //Created by space_is_hard
 //Additional functions provided by TDW89
 //This file is distributed under the terms of the MIT license
-//TEST: Ctrl+F "TEST:" to find all new changes that need testing. If none found, delete this message
 
 //This script is a multifunction utility script. It allows the user to select from
 //multiple utilities that will continuously run during flight. It can be set as a boot
@@ -254,7 +253,7 @@ PRINT "-------------------------------" + versionNumber.
 //function's variables just above the variable's parent function to keep things organized
 
 //=====Panel Utility=====
-//by space_is_hard TEST: New landed functionality
+//by space_is_hard
 
 //This variable will allow us to track the status of the panels since we can't get
 //their status
@@ -445,8 +444,7 @@ FUNCTION chutesUtil {
 }.
 
 //=====RT Antenna Util=====
-//by space_is_hard TEST: antenna list creation optimization
-
+//by space_is_hard
 //Variable to keep track of whether we've opened the antennas or not
 SET antennasOpen TO FALSE.
 
@@ -774,7 +772,7 @@ FUNCTION lowChargeShutdown {
             //time we performed this function. This tells us if it's decreasing.
             IF resource:AMOUNT / resource:CAPACITY <= 0.1 AND resource:AMOUNT < previousCharge {
                 
-                //Shuts down the core that we're running the code on TEST: Module and event
+                //Shuts down the core that we're running the code on
                 CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Toggle Power").
                 
                 //Informs the user of the action we took
