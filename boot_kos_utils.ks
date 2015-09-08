@@ -254,47 +254,22 @@ PRINT "-------------------------------" + versionNumber.
 //=====Panel Utility=====
 //by space_is_hard TEST: New landed functionality
 
-//Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
-//but will get immediately corrected if not
-SET inAtmo TO TRUE.
-
-//This variable will allow us to remember whether we've opened the panels yet or not
+//This variable will allow us to track the status of the panels since we can't get
+//their status
 SET panelsOpen TO FALSE.
 
 FUNCTION panelUtil {
-
-    //Determines whether the vessel is in the atmosphere. Ignores this check if landed
-    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT
-        AND NOT (SHIP:STATUS = "Landed") {
-        
-        //Only attempts to change the value if it's different than the current value
-        IF inAtmo = FALSE {
-            SET inAtmo TO TRUE.
-            
-            //Closes the panels
-            PANELS OFF.
-            
-            //Lets us remember that we've closed the panels
-            SET panelsOpen TO FALSE.
-            
-            //Informs the user that we're taking action
-            HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Closing Panels".
-            
-        }.
-        
-    //Determines whether the vessel is out of atmosphere. Ignores this check if landed
-    } ELSE IF SHIP:ALTITUDE > BODY:ATM:HEIGHT
-        AND NOT SHIP:STATUS = "Landed" {
     
-        //Only attempts to change the value if it's different than the current value
-        IF inAtmo = TRUE {
-            SET inAtmo TO FALSE.
+    //Only performs the checks within if the panels aren't already open
+    IF NOT panelsOpen {
+        
+        //Checks if we're out of the atmosphere
+        IF SHIP:ALTITUDE > BODY:ATM:HEIGHT {
             
             //Opens the panels
             PANELS ON.
             
-            //Lets us remember that we've opened the panels
+            //Changes the variable so we can track the status of the panels
             SET panelsOpen TO TRUE.
             
             //Informs the user that we're taking action
@@ -303,38 +278,53 @@ FUNCTION panelUtil {
             
         }.
         
-    }.
+        //Checks if we're landed and stationary
+        IF SHIP:STATUS = "Landed" AND SHIP:VELOCITY:SURFACE:MAG < 0.01 {
+            
+            //Opens the panels
+            PANELS ON.
+            
+            //Changes the variable so we can track the status
+            SET panelsOpen TO TRUE.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("Panel Utility: Landed and stationary; Opening Panels", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Opening Panels".
+            
+        }.
+        
+    //Only performs the checks within if the panels are already open
+    } ELSE IF panelsOpen {
+        
+        //Checks to see if we're in the atmosphere; doesn't close the panels if we're
+        //stationary to prevent it and the stationary check from fighting for control of
+        //the panels.
+        IF SHIP:ALTITUDE < BODY:ATM:HEIGHT 
+            AND SHIP:VELOCITY:SURFACE:MAG >= 0.01 {
+            
+            //Closes the panels
+            PANELS OFF.
+            
+            //Changes the variable so we can track the status of the panels
+            SET panelsOpen TO FALSE.
+            
+            //Informs the user why we're taking action based on which situation we're in
+            IF SHIP:STATUS = "Landed" {
+                
+                //If we're landed, we're probably starting to move from a standstill
+                HUDTEXT("Panel Utility: Landed and moving; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Closing Panels".
+                
+            } ELSE {
+                
+                //If we're not landed, we're probably re-entering
+                HUDTEXT("Panel Utility: Entering Atmosphere; Closing Panels", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Closing Panels".
+                
+            }.
+            
+        }.
     
-    //This separate check will open or close the panels based on whether we're landed and
-    //travelling below a certain speed. Doesn't attempt to open them if we've already
-    //opened them.
-    IF SHIP:STATUS = "Landed"
-        AND NOT panelsOpen
-        AND SHIP:VELOCITY:SURFACE:MAG < 0.1 {
-        
-        //Opens the panels
-        PANELS ON.
-        
-        //Lets us remember that we've opened the panels
-        SET panelsOpen TO TRUE.
-        
-        //Informs the user that we're taking action
-        HUDTEXT("Panel Utility: Landed and stationary; Opening Panels", 3, 2, 30, YELLOW, FALSE).
-        PRINT "Opening Panels".
-        
-    } ELSE IF SHIP:STATUS = "Landed"
-        AND panelsOpen
-        AND SHIP:VELOCITY:SURFACE:MAG >= 0.1 {
-        
-        //Closes the panels
-        PANELS OFF.
-        
-        SET panelsOpen TO FALSE.
-        
-        //Informs the user that we're taking action
-        HUDTEXT("Panel Utility: Landed and moving; Closing Panels", 3, 2, 30, YELLOW, FALSE).
-        PRINT "Closing Panels".
-        
     }.
     
 }.
