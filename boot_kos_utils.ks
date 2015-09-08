@@ -445,10 +445,8 @@ FUNCTION chutesUtil {
 //=====RT Antenna Util=====
 //by space_is_hard TEST: antenna list creation optimization
 
-//Variable to determine if we're in atmosphere or not. Assumes that we start out in atmo,
-//but will get immediately corrected if not. Name altered so as to not conflict with
-//the Panel Util's inAtmo variable.
-SET RTinAtmo TO TRUE.
+//Variable to keep track of whether we've opened the antennas or not
+SET antennasOpen TO FALSE.
 
 //List that we'll store all of the antenna parts in
 SET antennaList TO LIST().
@@ -470,14 +468,58 @@ FOR RTmodule IN SHIP:MODULESNAMED("ModuleRTAntenna") {
 }.
 
 FUNCTION RTAntennaUtil {    //TODO: Implement same landed check as panel util
-
-    //Determines whether the vessel is in the atmosphere.
-    IF SHIP:ALTITUDE < BODY:ATM:HEIGHT {
+    
+    //Only performs the checks within if the antennas aren't already open
+    IF NOT antennasOpen {
         
-        //Only attempts to change the value if it's different than the current value
-        IF RTinAtmo = FALSE {
+        //Checks if we're out of the atmosphere
+        IF SHIP:ALTITUDE > BODY:ATM:HEIGHT {
+            
+            //Goes over our previously-built antenna list
+            FOR antenna IN antennaList {
+                
+                //Opens each antenna
+                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).
+                
+            }.
+            
+            //Changes the variable so we can track the status of the panels
+            SET antennasOpen TO TRUE.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("RT Antenna Utility: Leaving Atmosphere; Opening Antennas", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Opening Antennas".
+            
+        }.
         
-            SET RTinAtmo TO TRUE.
+        //Checks if we're landed and stationary
+        IF SHIP:STATUS = "Landed" AND SHIP:VELOCITY:SURFACE:MAG < 0.1 {
+            
+            //Goes over our previously-built antenna list
+            FOR antenna IN antennaList {
+                
+                //Opens each antenna
+                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).
+                
+            }.
+            
+            //Changes the variable so we can track the status
+            SET antennasOpen TO TRUE.
+            
+            //Informs the user that we're taking action
+            HUDTEXT("RT Antenna Utility: Landed and Stationary; Opening Antennas", 3, 2, 30, YELLOW, FALSE).
+            PRINT "Opening Antennas".
+            
+        }.
+        
+    //Only performs the checks within if the antennas are already open
+    } ELSE IF antennasOpen {
+        
+        //Checks to see if we're in the atmosphere; doesn't close the antennas if we're
+        //stationary to prevent it and the stationary check from fighting for control of
+        //the antennas.
+        IF SHIP:ALTITUDE < BODY:ATM:HEIGHT 
+            AND SHIP:VELOCITY:SURFACE:MAG >= 0.1 {
             
             //Goes over our previously-built antenna list
             FOR antenna IN antennaList {
@@ -487,33 +529,26 @@ FUNCTION RTAntennaUtil {    //TODO: Implement same landed check as panel util
                 
             }.
             
-            //Informs the user that we're taking action
-            HUDTEXT("RT Antenna Utility: Entering Atmosphere; Closing Antennas", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Closing Antennas".
+            //Changes the variable so we can track the status of the antennas
+            SET antennasOpen TO FALSE.
             
-        }.
-        
-    } ELSE {
-    
-        //Only attempts to change the value if it's different than the current value
-        IF RTinAtmo = TRUE {
-        
-            SET RTinAtmo TO FALSE.
-            
-            //Goes over our previously-built antenna list
-            FOR antenna IN antennaList {
+            //Informs the user why we're taking action based on which situation we're in
+            IF SHIP:STATUS = "Landed" {
                 
-                //Opens the antenna
-                antenna:GETMODULE("ModuleRTAntenna"):DOACTION("Activate", TRUE).
+                //If we're landed, we're probably starting to move from a standstill
+                HUDTEXT("RT Antenna Utility: Landed and moving; Closing Antennas", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Closing Antennas".
+                
+            } ELSE {
+                
+                //If we're not landed, we're probably re-entering
+                HUDTEXT("RT Antenna Utility: Entering Atmosphere; Closing Antennas", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Closing Antennas".
                 
             }.
             
-            //Informs the user that we're taking action
-            HUDTEXT("RT Antenna Utility: Leaving Atmosphere; Opening Antennas", 3, 2, 30, YELLOW, FALSE).
-            PRINT "Opening Antennas".
-            
         }.
-        
+    
     }.
     
 }.
