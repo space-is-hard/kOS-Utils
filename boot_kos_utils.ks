@@ -183,7 +183,9 @@ UNTIL selectionMade = TRUE {
         makeSelection().
         
     //If no inputs are recognized
-    } ELSE {
+    } ELSE IF inputMade = TRUE
+        AND SHIP:CONTROL:PILOTTOP = 0 
+        AND SHIP:CONTROL:PILOTFORE = 0 {
         
         //No input detected, ready the loop for another input
         SET inputMade TO FALSE.
@@ -191,8 +193,8 @@ UNTIL selectionMade = TRUE {
     }.
     
     //Keeps our loop from running too fast but still is able to keep up with the user's
-    //potential for rapid keypresses TEST: faster loop time for better responsiveness
-    WAIT 0.05.
+    //potential for rapid keypresses
+    WAIT 0.01.
     
 }.
 
