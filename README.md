@@ -19,8 +19,14 @@
 * Fairing Util - Automatically jettisons all fairings on the vessel when you reach 95% of the current body's atmosphere height. This utility will automatically disable itself once it is fired. Compatible with stock, KW, and procedural fairings.
 * LES Util - Automatically jettisons the stock Launch Escape Tower when exiting the atmosphere or three seconds after a manual abort. This utility automatically disables itself once it is fired.
 * Autobrake Util - Automatically activates the wheel brakes on landing and releases them during takeoff.
+* Engine Vector Util - Keeps engines that are tagged correctly and mounted directly to an IR hinge pointed at the ship's center-of-mass. Great for off-axis designs like the Space Shuttle!
 * Low Power Shutdown (always-on) - Automatically shuts down the kOS core if the ship's electric charge is below 10% and still falling.
 
-I also left room in the menu for two more utilities for you to write! You can use the current utilities as an example of how to write one. Be sure to consult the [kOS documentation](http://ksp-kos.github.io/KOS_DOC/) and feel free to ask questions in the [/r/kOS](https://www.reddit.com/r/Kos) subreddit.
+I also left room in the menu for one more utility for you to write! You can use the current utilities as an example of how to write one. Be sure to consult the [kOS documentation](http://ksp-kos.github.io/KOS_DOC/) and feel free to ask questions in the [/r/kOS](https://www.reddit.com/r/Kos) subreddit.
 
 If you write a utility that you feel should be included with this release, I'll happily entertain a pull request!
+
+*****
+
+**Special Instructions:**
+* Engine Vector Util - Please use the kOS part tag field to tag any engines you would like to utilize this util on as "Vector Engine". The engine must be mounted directly to an IR hinge. If the hinge rotates all the way to the stop when you activate the util, ensure the hinge is set up to rotate far enough to point at the center of mass. If it should, try inverting the hinge's movement in its right-click-menu or via the IR menu.
