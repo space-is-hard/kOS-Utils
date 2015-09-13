@@ -1,5 +1,8 @@
 #kOS Utils Changelog
 
+##v1.3
+* [Insert changes here]
+
 ##v1.2
 * Adjusted selection menu loop time for better responsiveness
 * Functionality added to panel util and RT antenna util to allow each to open when the vessel is landed and stationary
