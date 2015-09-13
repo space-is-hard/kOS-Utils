@@ -7,7 +7,7 @@
 //multiple utilities that will continuously run during flight. It can be set as a boot
 //script and is designed for ease-of-use.
 
-SET versionNumber TO "v1.2".
+SET versionNumber TO "v1.3".
 
 CLEARSCREEN.
 SET TERMINAL:WIDTH TO 64.
@@ -467,7 +467,7 @@ FOR RTmodule IN SHIP:MODULESNAMED("ModuleRTAntenna") {
     
 }.
 
-FUNCTION RTAntennaUtil {    //TODO: Implement same landed check as panel util
+FUNCTION RTAntennaUtil {
     
     //Only performs the checks within if the antennas aren't already open
     IF NOT antennasOpen {
