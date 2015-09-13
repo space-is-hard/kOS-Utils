@@ -51,9 +51,9 @@ PRINT " [ ]Autobrake  - Automatically turns on the wheel brakes        ".   //Li
 PRINT "         Util    and air brakes when on the ground and the      ".
 PRINT "                 throttle is zero. Lets them go otherwise.      ".
 PRINT "                                                                ".
-PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".   //Line 32
-PRINT "                                                                ".
-PRINT "                                                                ".
+PRINT " [ ]Engine     - Actuates IR hinges to automatically point an   ".   //Line 32
+PRINT "    Vector       engine at the ship's center-of-mass. See       ".
+PRINT "      Util       documentation for usage instructions.          ".
 PRINT "                                                                ".
 PRINT " [ ]Empty Slot - Write your own utility and put it here!        ".   //Line 36
 PRINT "                                                                ".
@@ -84,7 +84,7 @@ SET selectionList TO LIST(
     FALSE,  //Fairing Util
     FALSE,  //LES Util
     FALSE,  //Autobrake Util
-    FALSE,  //Empty Slot
+    FALSE,  //Engine Vector Util
     FALSE,  //Empty Slot
     FALSE   //Run Utilities
 ).
@@ -244,6 +244,23 @@ IF selectionList[5] = TRUE {
 
 IF selectionList[6] = TRUE {
     PRINT "- Autobrake Utility Active".
+}.
+
+IF selectionList[7] = TRUE {
+    
+    //We'll check to see if Infernal Robotics is installed
+    IF ADDONS:IR:AVAILABLE = TRUE {
+        
+        PRINT "- Engine Vector Utility Active".
+        
+    //If it's not, we'll disable the function
+    } ELSE {
+        
+        PRINT "- Infernal Robotics not installed;".
+        PRINT "  Engine Vector Utility Disabled".
+        
+    }.
+    
 }.
 
 //Visual separator
@@ -738,7 +755,81 @@ FUNCTION autoBrakeUtil {
     
 }.
 
-//=====Empty Slot [7]=====
+//=====Engine Vector Util=====
+//by space_is_hard
+
+//This util will automatically vector any engine that's tagged "Vector Engine" and is
+//mounted directly to an infernal robotics hinge to point as close to the ship's center-
+//of-mass as it can. For best results, the hinge should be set with high acceleration. If
+//the hinge moves all the way to the stops when the script is started, try inverting the
+//hinge's direction of movement via the right-click menu
+
+//First we'll set up a list of all of the engines that we want to vector. We'll check to
+//see if there are any first to avoid crashing the script if there's not.
+IF SHIP:PARTSTAGGED("Vector Engine"):LENGTH > 0 {
+
+    SET vectorEngines TO SHIP:PARTSTAGGED("Vector Engine").
+    
+}.
+
+//Then we'll find each of those engines' parent parts, which should be the IR hinge that
+//we want to use to move the engine. First we'll need to declare a list.
+SET vectorHinges TO LIST().
+
+//And then we'll use a FROM loop to assign each index in that list to the corresponding
+//index from the vectorEngines list
+FROM { LOCAL i TO 0. } UNTIL i = vectorEngines:LENGTH STEP { SET i TO i + 1. } DO {
+    
+    //Each time we loop over the vectorEngines list, we'll check the current index's
+    //part's parent part, and see if it contains the IR servo module
+    IF vectorEngines[i]:PARENT:MODULES:CONTAINS("MuMechToggle") {
+        
+        //If it does, we'll add it to the vectorHinges list. Instead of storing the hinge
+        //part itself, we'll store the IR module associated with it. This will prevent us
+        //from having to look up the module each time we want to use it, which will help
+        //improve performance 
+        vectorHinges:ADD(vectorEngines[i]:PARENT:GETMODULE("MuMechToggle").
+        
+    }.
+    
+}.
+
+FUNCTION engineVectorUtil {
+    
+    //We'll go over each of the hinge modules with this FROM loop
+    FROM { LOCAL i TO 0. } UNTIL i = vectorEngines:LENGTH STEP { SET i TO i + 1. } DO {
+        
+        //We'll find the number of degrees that the hinge is away from the center of mass
+        //by finding the angle between the direction its associated engine is facing and
+        //the ship's center of mass, which is given by v(0,0,0). We use the engine's
+        //topvector, exclude the engine's starboard vector, and then subtract 90 degrees
+        //from that angle so that we will see negative values in one direction. If we
+        //didn't, the angle would always be positive and we wouldn't know which way to
+        //turn the servo to bring it to zero
+        SET servoOffset TO 90 - VANG(
+            VXCL(
+                vectorEngines[i]:FACING:STARVECTOR,
+                vectorEngines[i]:FACING:TOPVECTOR
+            ),
+            v(0,0,0)
+        ).
+        
+        //We'll then adjust the speed of that servo based on how far away it is from the
+        //desired position. We want fast response, so a multiplier is used
+        vectorHinges[i]:SETFIELD("Speed", ABS(servoOffset * 2.5)).
+        
+        //And now all we have to do is to tell it to move in the correct direction
+        IF servoOffset > 0 {
+            vectorHinges[i]:DOACTION("Move -", TRUE).
+            
+        } ELSE IF servoOffset < 0 {
+            vectorHinges[i]:DOACTION("Move +", TRUE).
+            
+        }.
+        
+    }.
+    
+}.
 
 //=====Empty Slot [8]=====
 
@@ -839,11 +930,11 @@ UNTIL 1 = 2 {
         
     }.
     
-    //IF selectionList[7] = TRUE {
+    IF selectionList[7] = TRUE {
         
-        //Empty Slot
+        engineVectorUtil().
         
-    //}.
+    }.
     
     //IF selectionList[8] = TRUE {
         
