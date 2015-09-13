@@ -1,4 +1,4 @@
-#kOS Utils v1.2
+#kOS Utils v1.3
 
 **This boot script is designed to offer some useful utilities to otherwise normal gameplay via the powers of the [Kerbal Operating System mod](http://forum.kerbalspaceprogram.com/threads/68089). Using it requires absolutely no coding skills whatsoever, however the script itself is well-commented and designed to be an example of how you can use kOS to automate various tasks in Kerbal Space Program.**
 
