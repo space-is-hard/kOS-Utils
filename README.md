@@ -8,7 +8,7 @@
 2. Download the kOS Utilities Script and place it in your [KSP install location]/Ships/Script folder (kOS will create this folder, however if you haven't run KSP with kOS installed, you may create it yourself).
 3. Attach a kOS CPU to your craft of choice
 4. In the tweakable menu for the CPU, select *boot_kos_utils* as the boot script
-5. Launch your ship and follow the instructions!
+5. Launch your ship and follow the instructions! Note: To use the selection menu, please be sure that the kOS terminal window is *unfocused*. This is required due to the way the script uses the translation controls to read user input.
 
 ##Utilities included
 
