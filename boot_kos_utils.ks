@@ -756,6 +756,11 @@ FUNCTION autoBrakeUtil {
 //amount of charge on the ship. We'll set it now and update it every loop.
 SET previousCharge TO SHIP:ELECTRICCHARGE.
 
+//We'll use this variable as a flag to let us know if we've already issued a warning about
+//low power. We'll flip it to true once the power dips below 15% and we issue the hudtext
+//warning to the user
+SET lowPowerFlag TO FALSE.
+
 FUNCTION lowChargeShutdown {
     
     //Here, we'll list all of the consumable resources on the entire ship
@@ -776,8 +781,29 @@ FUNCTION lowChargeShutdown {
                 CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Toggle Power").
                 
                 //Informs the user of the action we took
-                HUDTEXT("kOS Utils: Low power, shutting down", 3, 2, 30, YELLOW, FALSE).
+                HUDTEXT("kOS Utils: Low power, shutting down", 3, 2, 30, RED, FALSE).
                 PRINT "Low power, shutting down".
+                
+            }.
+            
+            //If our flag is still false and the power is below 15% and falling
+            IF NOT lowPowerFlag
+                AND resource:AMOUNT / resource:CAPACITY <= 0.15
+                AND resource:AMOUNT < previousCharge {
+                
+                //Inform the user that the power is low
+                HUDTEXT("kOS Utils: Low power", 3, 2, 30, YELLOW, FALSE).
+                PRINT "Low power, <15% and falling".
+                
+                //Set our flag to true so that we don't keep warning the user every time
+                //the loop cycles
+                SET lowPowerFlag TO TRUE.
+                
+            //If we're above 15% power, flip the flag back to false so we know to
+            //warn the user next time it drops below 15%
+            } ELSE IF resource:AMOUNT / resource:CAPACITY > 0.15 {
+                
+                SET lowPowerFlag TO FALSE.
                 
             }.
             
