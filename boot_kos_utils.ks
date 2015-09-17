@@ -780,7 +780,8 @@ FUNCTION lowChargeShutdown {
                 //Shuts down the core that we're running the code on
                 CORE:PART:GETMODULE("kOSProcessor"):DOEVENT("Toggle Power").
                 
-                //Informs the user of the action we took
+                //Kills any timewarp and informs the user of the action we took
+                SET WARP TO 0.
                 HUDTEXT("kOS Utils: Low power, shutting down", 3, 2, 30, RED, FALSE).
                 PRINT "Low power, shutting down".
                 
@@ -791,7 +792,8 @@ FUNCTION lowChargeShutdown {
                 AND resource:AMOUNT / resource:CAPACITY <= 0.15
                 AND resource:AMOUNT < previousCharge {
                 
-                //Inform the user that the power is low
+                //Kill any timewarp and inform the user that the power is low
+                SET WARP TO 0.
                 HUDTEXT("kOS Utils: Low power", 3, 2, 30, YELLOW, FALSE).
                 PRINT "Low power, <15% and falling".
                 
