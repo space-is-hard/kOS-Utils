@@ -785,6 +785,9 @@ FUNCTION lowChargeShutdown {
                 HUDTEXT("kOS Utils: Low power, shutting down", 3, 2, 30, RED, FALSE).
                 PRINT "Low power, shutting down".
                 
+                //Kill time warp so they don't warp past the shutdown
+                SET WARP TO 0.
+                
             }.
             
             //If our flag is still false and the power is below 15% and falling
@@ -796,6 +799,9 @@ FUNCTION lowChargeShutdown {
                 SET WARP TO 0.
                 HUDTEXT("kOS Utils: Low power", 3, 2, 30, YELLOW, FALSE).
                 PRINT "Low power, <15% and falling".
+                
+                //Kill time warp so they don't warp past the shutdown
+                SET WARP TO 0.
                 
                 //Set our flag to true so that we don't keep warning the user every time
                 //the loop cycles
